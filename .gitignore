@@ -3,5 +3,4 @@ target/
 out/
 *.iml
 src/test/
-src/main/resources
 pom.xml
