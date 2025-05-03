@@ -2,9 +2,17 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Введите текст и нажмите <Enter>: ");
-        String text = new Scanner(System.in) .nextLine();
-        System.out.println("Длина текста: " + text.length());
-        //System.out.println("Случайное число от 0 до 1: " + Math.random());
+        System.out.println("Введите первое число: ");
+        int num1 = new Scanner(System.in).nextInt();
+        System.out.println("Введите второе число: ");
+        int num2 = new Scanner(System.in).nextInt();
+        int sum = num1 + num2;
+        int difference = num1 - num2;
+        int product = num1 * num2;
+        double quotient = (double) num1 / num2;
+        System.out.println("Сумма: " + sum);
+        System.out.println("Разница: " + difference);
+        System.out.println("Произведение: " + product);
+        System.out.println("Частное: " + quotient);
     }
 }
