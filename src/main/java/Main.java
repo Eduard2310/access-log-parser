@@ -2,8 +2,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Main {
+    private static final Logger logger = Logger.getLogger(Main.class.getName());
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         int requestCounter = 0;
@@ -21,11 +25,11 @@ public class Main {
                 System.out.println("Это файл номер " + requestCounter);
 
                 int totalLines = 0;
-                int maxLength = Integer.MIN_VALUE;
-                int minLength = Integer.MAX_VALUE;
+                int googlebotCount = 0;
+                int yandexbotCount = 0;
 
                 try (FileReader fileReader = new FileReader(path);
-                BufferedReader reader = new BufferedReader(fileReader)) {
+                     BufferedReader reader = new BufferedReader(fileReader)) {
                     String line;
                     while ((line = reader.readLine()) != null) {
                         int length = line.length();
@@ -33,21 +37,34 @@ public class Main {
                             throw new TooLongLineException("В файле обнаружена строка длиной более 1024 символов: " + length);
                         }
                         totalLines++;
-                        if (length > maxLength) maxLength = length;
-                        if (length < minLength) minLength = length;
-                    }
-                    if (totalLines == 0) {
-                        minLength = 0;
-                        maxLength = 0;
+
+                        int startIndex  = line.indexOf('(');
+                        int endIndex = line.indexOf(')');
+                        if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
+                            String firstBrackers = line.substring(startIndex + 1, endIndex);
+                            String[] parts = firstBrackers.split(";");
+                            if (parts.length >= 2) {
+                                String fragment = parts[1].trim();
+                                int slashIndex = fragment.indexOf('/');
+                                String botName = (slashIndex != -1) ? fragment.substring(0, slashIndex) : fragment;
+                                if (botName.equals("Googlebot")) {
+                                    googlebotCount++;
+                                } else if (botName.equals("YandexBot")) {
+                                    yandexbotCount++;
+                                }
+                            }
+                        }
                     }
                     System.out.println("Общее количество строк в файле: " + totalLines);
-                    System.out.println("Длина самой длинной строки: " + maxLength);
-                    System.out.println("Длина самой короткой строки: " + minLength);
+                    if (totalLines > 0) {
+                        System.out.println("Доля запросов от YandexBot: " + ((double) yandexbotCount / totalLines));
+                        System.out.println("Доля запросов от Googlebot: " + ((double) googlebotCount / totalLines));
+                    }
                 } catch (TooLongLineException ex) {
                     System.out.println("Ошибка: " + ex.getMessage());
                     break;
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    logger.log(Level.SEVERE, "Произошла ошибка при обработке файла", ex);
                 }
             }
         }
