@@ -1,14 +1,45 @@
+import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Main {
+
     private static final Logger logger = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) {
+
+        Statistics statistics = new Statistics();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\efazylov\\Desktop\\home_work\\access.log"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                try {
+                    LogEntry entry = new LogEntry(line);
+                    statistics.addEntry(entry);
+                } catch (Exception e) {
+                    System.out.println("Некорректная строка лога: " +e.getMessage());
+                }
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("Файл не найден: " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("Ошибка ввода-вывода: " + e.getMessage());
+        }
+
+        double hourTraffic = statistics.getTrafficRate();
+        System.out.println("Средний объем траффика за час: " + hourTraffic + " байт/час");
+
+        //отладка
+        System.out.println("minTime: " + statistics.getMinTime());
+        System.out.println("maxTime: " + statistics.getMaxTime());
+
+
+
         Scanner scanner = new Scanner(System.in);
         int requestCounter = 0;
         while (true) {
