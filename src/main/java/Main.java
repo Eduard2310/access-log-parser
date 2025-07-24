@@ -35,6 +35,17 @@ public class Main {
         double hourTraffic = statistics.getTrafficRate();
         System.out.println("Средний объем траффика за час: " + hourTraffic + " байт/час");
 
+        System.out.println("Несуществующие страницы (код 404):");
+        for (String  page : statistics.getAllNonExistentPages()) {
+            System.out.println(" - " + page);
+        }
+
+        System.out.println("Статистика браузеров:");
+        Map<String, Double> browserStats = statistics.getBrowserStats();
+        for (Map.Entry<String, Double> entry : browserStats.entrySet()) {
+            System.out.printf("%s:%.2f%n", entry.getKey(), entry.getValue());
+        }
+
         //отладка
         /*
         System.out.println("minTime: " + statistics.getMinTime());

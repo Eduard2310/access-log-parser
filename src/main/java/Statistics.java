@@ -10,6 +10,9 @@ public class Statistics {
     private HashSet<String> pages;
     private HashMap<String, Integer> osStats;
     private int totalOSCount;
+    private HashSet<String> nonExistentPages = new HashSet<>();
+    private HashMap<String, Integer> browserStats = new HashMap<>();
+    private int totalBrowserCount = 0;
 
     public Statistics() {
         this.totalTraffic = 0;
@@ -41,6 +44,16 @@ public class Statistics {
             osStats.put(os, osStats.getOrDefault(os, 0) +1);
             totalOSCount++;
         }
+
+        if (entry.getResponseCode() == 404) {
+            nonExistentPages.add(entry.getPage());
+        }
+
+        String browser = entry.getUserAgent().getBrowserType();
+        if (browser != null && !browser.isEmpty()) {
+            browserStats.put(browser, browserStats.getOrDefault(browser, 0) + 1);
+            totalBrowserCount++;
+        }
     }
 
     public double getTrafficRate() {
@@ -71,5 +84,19 @@ public class Statistics {
             stats.put(entry.getKey(), entry.getValue() / (double) totalOSCount);
         }
         return  stats;
+    }
+
+    public List<String> getAllNonExistentPages() {
+        return new ArrayList<>(nonExistentPages);
+    }
+
+    public Map<String, Double> getBrowserStats() {
+        Map<String, Double> result = new HashMap<>();
+        if (totalBrowserCount == 0)
+            return result;
+        for (Map.Entry<String, Integer> entry : browserStats.entrySet()) {
+            result.put(entry.getKey(), entry.getValue() / (double) totalBrowserCount);
+        }
+        return result;
     }
 }
