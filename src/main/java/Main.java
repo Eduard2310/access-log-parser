@@ -3,6 +3,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,8 +36,23 @@ public class Main {
         System.out.println("Средний объем траффика за час: " + hourTraffic + " байт/час");
 
         //отладка
+        /*
         System.out.println("minTime: " + statistics.getMinTime());
         System.out.println("maxTime: " + statistics.getMaxTime());
+        */
+
+        //вывод страниц
+        /*System.out.println("Страницы сайта:");
+        for (String page : statistics.getAllPages()) {
+            System.out.println("-" + page);
+        }
+        */
+
+        System.out.println("Статистика по операционным системам:");
+        Map<String, Double> osStats = statistics.getOperatingSystemStats();
+        for (Map.Entry<String, Double> entry : osStats.entrySet()) {
+            System.out.printf("%s:%.2f%n", entry.getKey(), entry.getValue());
+        }
 
 
 
@@ -99,5 +115,8 @@ public class Main {
                 }
             }
         }
+
+
+
     }
 }

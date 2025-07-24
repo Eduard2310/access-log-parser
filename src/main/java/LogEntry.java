@@ -95,4 +95,10 @@ public class LogEntry {
     public UserAgent getUserAgent() {
         return userAgent;
     }
+    public String getPage() {
+        return getPath();
+    }
+    public String getOperatingSystem() {
+        return userAgent != null ? userAgent.getOperatingSystem() : "Unknown";
+    }
 }

@@ -1,15 +1,23 @@
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.*;
 
 public class Statistics {
     private long totalTraffic;
     private LocalDateTime minTime;
     private LocalDateTime maxTime;
 
+    private HashSet<String> pages;
+    private HashMap<String, Integer> osStats;
+    private int totalOSCount;
+
     public Statistics() {
         this.totalTraffic = 0;
         this.minTime = null;
         this.maxTime = null;
+        this.pages = new HashSet<>();
+        this.osStats = new HashMap<>();
+        this.totalOSCount = 0;
     }
 
     public void addEntry(LogEntry entry) {
@@ -23,6 +31,16 @@ public class Statistics {
         int size = entry.getResponseSize();
         if (size < 0) size = 0;
         totalTraffic += size;
+
+        if (entry.getResponseCode() == 200) {
+            pages.add(entry.getPage());
+        }
+
+        String os = entry.getOperatingSystem();
+        if (os != null && !os.isEmpty()) {
+            osStats.put(os, osStats.getOrDefault(os, 0) +1);
+            totalOSCount++;
+        }
     }
 
     public double getTrafficRate() {
@@ -40,5 +58,18 @@ public class Statistics {
     }
     public LocalDateTime getMaxTime() {
         return maxTime;
+    }
+
+    public List<String> getAllPages() {
+        return new ArrayList<>(pages);
+    }
+
+    public Map<String, Double> getOperatingSystemStats() {
+        Map<String, Double> stats = new HashMap<>();
+        if (totalOSCount == 0) return stats;
+        for (Map.Entry<String, Integer> entry : osStats.entrySet()) {
+            stats.put(entry.getKey(), entry.getValue() / (double) totalOSCount);
+        }
+        return  stats;
     }
 }

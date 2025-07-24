@@ -42,4 +42,7 @@ public class UserAgent {
     public String getBrowserType() {
         return browserType;
     }
+    public String getOperatingSystem() {
+        return getOsType();
+    }
 }
