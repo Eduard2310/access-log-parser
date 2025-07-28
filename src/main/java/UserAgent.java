@@ -36,6 +36,9 @@ public class UserAgent {
     public String getRaw() {
         return raw;
     }
+    public String getUserAgentString() {
+        return raw;
+    }
     public String getOsType() {
         return osType;
     }
@@ -44,5 +47,13 @@ public class UserAgent {
     }
     public String getOperatingSystem() {
         return getOsType();
+    }
+    public boolean isBot() {
+        return raw.toLowerCase().contains("bot");
+    }
+
+    @Override
+    public String toString() {
+        return String.format("UserAgent[os=%s, browser=%s, raw=%s]", osType, browserType, raw);
     }
 }

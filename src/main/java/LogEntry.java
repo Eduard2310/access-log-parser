@@ -101,4 +101,8 @@ public class LogEntry {
     public String getOperatingSystem() {
         return userAgent != null ? userAgent.getOperatingSystem() : "Unknown";
     }
+
+    public boolean isBot() {
+        return userAgent != null && userAgent.isBot();
+    }
 }
