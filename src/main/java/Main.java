@@ -79,9 +79,9 @@ public class Main {
             System.out.println("Общий траффик: " + statistics.getTotalTraffic() + " байт");
             System.out.println("-----");
             //Посещения и ошибки
-            System.out.println("Сруднее количество посещений в час: " + statistics.getAverageVisitsPerHour());
-            System.out.println("Сруднее количество ошибок в час: " + statistics.getAverageErrorsPerHour());
-            System.out.println("Сруднее посещаемость одним пользователем: " + statistics.getAverageVisitsPerUser());
+            System.out.println("Сруднее количество посещений в час: " + statistics.getAverageVisitsPerHours());
+            System.out.println("Сруднее количество ошибок в час: " + statistics.getAverageErrorsPerHours());
+            System.out.println("Сруднее посещаемость одним пользователем: " + statistics.getAverageVisitsPerUsers());
             System.out.println("-----");
             //Страницы
             /*System.out.println("Существующие страницы:");
@@ -112,6 +112,13 @@ public class Main {
                 System.out.println("Доля запросов от Googlebot: " + ((double) googlebotCount / totalLines));
                 System.out.println("Доля запросов от YandexBot: " + ((double) yandexbotCount / totalLines));
             }
+            System.out.println("-----");
+            System.out.println("Пиковая посещаемость (в секунду): " + statistics.getPeakVisitsPerSecond());
+            System.out.println("Сайты, которые ссылались на текущий  сайт: " + statistics.getReferringDomains());
+            for (String domain : statistics.getReferringDomains()) {
+                System.out.println(" - " + domain);
+            }
+            System.out.println("Максимальное число визитов одним пользователем: " + statistics.getMaxVisitsPerUser());
             System.out.println("-----");
             System.out.println("Конец анализа файла");
         }

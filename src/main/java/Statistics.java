@@ -8,27 +8,24 @@ public class Statistics {
     private LocalDateTime minTime;
     private LocalDateTime maxTime;
 
-    private HashSet<String> pages;
-    private HashMap<String, Integer> osStats;
-    private int totalOSCount;
-    private HashSet<String> nonExistentPages = new HashSet<>();
-    private HashMap<String, Integer> browserStats = new HashMap<>();
-    private int totalBrowserCount = 0;
+    private final Set<String> pages = new HashSet<>();
+    private final Set<String> nonExistentPages = new HashSet<>();
+    private final Set<String> uniqueUserIPs = new HashSet<>();
+    private final Set<String> referringDomains = new HashSet<>();
 
+    private final Map<String, Integer> osStats = new HashMap<>();
+    private final Map<String, Integer> browserStats = new HashMap<>();
+    private final Map<LocalDateTime, Integer> secondVisitMap = new HashMap<>();
+    private final Map<String, Integer> userVisitCounts = new HashMap<>();
+
+
+    private int totalOSCount = 0;
+    private int totalBrowserCount = 0;
     private long usersVisits = 0;
     private long errorCount = 0;
-    private HashSet<String> uniqueUserIPs = new HashSet<>();
+
 
     private static final Pattern BOT_PATTERN = Pattern.compile(".*bot.*", Pattern.CASE_INSENSITIVE);
-
-    public Statistics() {
-        this.totalTraffic = 0;
-        this.minTime = null;
-        this.maxTime = null;
-        this.pages = new HashSet<>();
-        this.osStats = new HashMap<>();
-        this.totalOSCount = 0;
-    }
 
     public void addEntry(LogEntry entry) {
         LocalDateTime entryTime = entry.getTime();
@@ -42,22 +39,25 @@ public class Statistics {
         if (size < 0) size = 0;
         totalTraffic += size;
 
-        String userAgentStr = entry.getUserAgent().getUserAgentString();
-        boolean isBot = BOT_PATTERN.matcher(userAgentStr).matches();
+        boolean isBot = entry.isBot();
 
         if (entry.getResponseCode() == 200) {
             pages.add(entry.getPage());
         }
+        if (entry.getResponseCode() == 404) {
+            nonExistentPages.add(entry.getPage());
+        }
 
         String os = entry.getOperatingSystem();
         if (os != null && !os.isEmpty()) {
-            osStats.put(os, osStats.getOrDefault(os, 0) +1);
+            osStats.put(os, osStats.getOrDefault(os, 0) + 1);
             totalOSCount++;
         }
 
-        if (!isBot) {
-            usersVisits++;
-            uniqueUserIPs.add(entry.getIpAddr());
+        String browser = entry.getUserAgent().getBrowserType();
+        if (browser != null && !browser.isEmpty()) {
+            browserStats.put(browser, browserStats.getOrDefault(browser, 0) + 1);
+            totalBrowserCount++;
         }
 
         int code = entry.getResponseCode();
@@ -65,14 +65,25 @@ public class Statistics {
             errorCount++;
         }
 
-        if (entry.getResponseCode() == 404) {
-            nonExistentPages.add(entry.getPage());
+        if (!isBot) {
+            usersVisits++;
+            uniqueUserIPs.add(entry.getIpAddr());
+            userVisitCounts.put(entry.getIpAddr(), userVisitCounts.getOrDefault(entry.getIpAddr(), 0) + 1);
+            LocalDateTime second = entry.getTime().withNano(0);
+            secondVisitMap.put(second, secondVisitMap.getOrDefault(second, 0) + 1);
         }
 
-        String browser = entry.getUserAgent().getBrowserType();
-        if (browser != null && !browser.isEmpty()) {
-            browserStats.put(browser, browserStats.getOrDefault(browser, 0) + 1);
-            totalBrowserCount++;
+        String referer = entry.getReferer();
+        if (referer != null && !referer.equals("-") && !referer.isEmpty()) {
+            try {
+                java.net.URI uri = new java.net.URI(referer);
+                String domain = uri.getHost();
+                if (domain != null) {
+                    referringDomains.add(domain.replaceFirst("^www\\.", ""));
+                }
+            } catch (Exception ignored) {
+
+            }
         }
     }
 
@@ -81,36 +92,35 @@ public class Statistics {
             return 1;
         }
         long hours = Duration.between(minTime, maxTime).toHours();
-        return  hours > 0 ? hours : 1;
+        return Math.max(hours, 1);
     }
 
-    public double getAverageVisitsPerHour() {
+    public double getTrafficRate() {
+        return (double) totalTraffic / hoursBetweenTimes();
+    }
+
+    public double getAverageVisitsPerHours() {
         return (double) usersVisits / hoursBetweenTimes();
     }
 
-    public double getAverageErrorsPerHour() {
+    public double getAverageErrorsPerHours() {
         return (double) errorCount / hoursBetweenTimes();
     }
 
-    public double getAverageVisitsPerUser() {
+    public double getAverageVisitsPerUsers() {
         if (uniqueUserIPs.isEmpty())
             return 0.0;
         return (double) usersVisits / uniqueUserIPs.size();
     }
 
-    public double getTrafficRate() {
-        if (minTime == null || maxTime == null || !minTime.isBefore(maxTime)) return 0.0;
-        long hours = Duration.between(minTime, maxTime).toHours();
-        if (hours <= 0) hours = 1;
-        return (double) totalTraffic / hours;
-    }
-
     public long getTotalTraffic() {
         return totalTraffic;
     }
+
     public LocalDateTime getMinTime() {
         return minTime;
     }
+
     public LocalDateTime getMaxTime() {
         return maxTime;
     }
@@ -119,17 +129,17 @@ public class Statistics {
         return new ArrayList<>(pages);
     }
 
+    public List<String> getAllNonExistentPages() {
+        return new ArrayList<>(nonExistentPages);
+    }
+
     public Map<String, Double> getOperatingSystemStats() {
         Map<String, Double> stats = new HashMap<>();
         if (totalOSCount == 0) return stats;
         for (Map.Entry<String, Integer> entry : osStats.entrySet()) {
             stats.put(entry.getKey(), entry.getValue() / (double) totalOSCount);
         }
-        return  stats;
-    }
-
-    public List<String> getAllNonExistentPages() {
-        return new ArrayList<>(nonExistentPages);
+        return stats;
     }
 
     public Map<String, Double> getBrowserStats() {
@@ -140,5 +150,25 @@ public class Statistics {
             result.put(entry.getKey(), entry.getValue() / (double) totalBrowserCount);
         }
         return result;
+    }
+
+    public int getPeakVisitsPerSecond() {
+        int max = 0;
+        for (int count : secondVisitMap.values()) {
+            if (count > max) max = count;
+        }
+        return max;
+    }
+
+    public List<String> getReferringDomains() {
+        return new ArrayList<>(referringDomains);
+    }
+
+    public int getMaxVisitsPerUser() {
+        int max = 0;
+        for (int count : userVisitCounts.values()) {
+            if (count > max) max = count;
+        }
+        return max;
     }
 }
